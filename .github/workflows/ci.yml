@@ -21,6 +21,6 @@ jobs:
         if: always()
         uses: rjstone/discord-webhook-notify@v1
         with:
-          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
           severity: info
           text: "CI build status for commit ${{ github.sha }}: ${{ job.status }}!"
