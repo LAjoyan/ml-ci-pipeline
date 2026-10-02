@@ -16,3 +16,11 @@ jobs:
       - run: uv run ruff format --check src tests
       - run: uv run mypy
       - run: uv run pytest
+
+      - name: Send Discord Notification
+        if: always()
+        uses: rjstone/discord-webhook-actions@v2
+        with:
+          webhook: ${{ secrets.DISCORD\_WEBHOOK }}
+          severity: info
+          text: "CI build status for commit ${{ github.sha }}: ${{ job.status }}!"
