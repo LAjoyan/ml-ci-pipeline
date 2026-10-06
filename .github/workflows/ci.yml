@@ -4,6 +4,7 @@ on:
     branches: [main]
   pull_request:
 jobs:
+  # 1. My original check job (Ruff and MyPy)
   check:
     runs-on: ubuntu-latest
     env:
@@ -15,12 +16,41 @@ jobs:
       - run: uv run ruff check src tests
       - run: uv run ruff format --check src tests
       - run: uv run mypy
+
+  # 2. The new job running pytest
+  test:
+    needs: check
+    runs-on: ubuntu-latest
+    env:
+      HYPOTHESIS_PROFILE: ci
+    steps:
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
       - run: uv run pytest
 
-      - name: Send Discord Notification
-        if: always()
-        uses: rjstone/discord-webhook-notify@v1
+  # 3. The new job uploading the artifact
+  upload_artifact:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create a file to upload
+        run: echo "The build succeeded!" > result.txt
+
+      - name: Upload file as artifact
+        uses: actions/upload-artifact@v4
         with:
-          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
-          severity: info
-          text: "CI build status for commit ${{ github.sha }}: ${{ job.status }}!"
+          name: my-report
+          path: result.txt
+
+  # 4. The Discord job (Runs no matter what happens before it)
+  notify:
+    needs: [check, test, upload_artifact]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Send Discord Notification
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+        webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+        severity: info
+        text: "CI build status for commit ${{ github.sha }}: ${{ job.status }}!"
