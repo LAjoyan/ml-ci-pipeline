@@ -24,6 +24,7 @@ jobs:
     env:
       HYPOTHESIS_PROFILE: ci
     steps:
+      - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --frozen
       - run: uv run pytest
